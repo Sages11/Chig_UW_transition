@@ -10,29 +10,6 @@ library(RColorBrewer)
 rstan_options(auto_write = TRUE)
 options(mc.cores = parallel::detectCores())
 
-#execute once:
-#pkgbuild::has_build_tools(debug = TRUE)
-
-#This step is optional, but it can result in compiled Stan programs that execute much faster than 
-#they otherwise would. Simply paste the following into R once
-
-#dotR <- file.path(Sys.getenv("HOME"), ".R")
-#if (!file.exists(dotR)) dir.create(dotR)
-#M <- file.path(dotR, ifelse(.Platform$OS.type == "windows", "Makevars.win", "Makevars"))
-#if (!file.exists(M)) file.create(M)
-#cat("\nCXX14FLAGS=-O3 -march=native -mtune=native",
-#    if( grepl("^darwin", R.version$os)) "CXX14FLAGS += -arch x86_64 -ftemplate-depth-256" else 
-#      if (.Platform$OS.type == "windows") "CXX11FLAGS=-O3 -march=native -mtune=native" else
-#        "CXX14FLAGS += -fPIC",
-#    file = M, sep = "\n", append = TRUE)
-#However, be advised that setting the optimization level to O3 may cause problems for packages besides 
-#RStan and that, in rare cases, specifying -march=native -mtune=native may cause Stan programs to not work. 
-#If you ever need to change anything with your C++ toolchain configuration, you can execute
-
-#M <- file.path(Sys.getenv("HOME"), ".R", ifelse(.Platform$OS.type == "windows", "Makevars.win", "Makevars"))
-#file.edit(M)
-
-
 #Useful functions for plotting and summarizing posteriors
 #Function to calculate 95% quantiles
 cred <- function(x){
@@ -213,7 +190,7 @@ exec_func(script='Chignik_hierarchical_transition_beta_bin_A.stan', exec=T, shin
 #Execute and plot --> select preseason=T if forecasting for a given season before any samples have been collected
 #otherwise preseason=F and the function will run the model iteratively adding each sample for the most recent year
 #and plot. This function is meant to be the guts of what a manager would run
-plot_func <- function(exec=F, iter=1000, preseason=F){
+plot_func <- function(exec=T, iter=1000, preseason=F){
   #Read in genetic sampling data
   Comp_dat <- Comp_dat_read.func(file_name='2017 Chignik Estimates Summary.csv')
   #Read in escapement data
@@ -237,16 +214,16 @@ plot_func <- function(exec=F, iter=1000, preseason=F){
   #Colors for plotting --> unique color for each GSI sample
   col.vec <- magma(table(Comp_dat$Year)[n_year_fixed], alpha = 1, begin = 0, end = 1, direction = -1)
   #Read in escapement goals (based on 2018 values) 
-  esc_goals <- read.csv(file='Esc_goals.csv')
+  #esc_goals <- read.csv(file='Esc_goals.csv')
   #Reformat dates to be in DOY format
-  esc_goals$Date <-  as.Date(esc_goals$Date, format='%m/%d/%y')
-  esc_goals$DOY <- yday(esc_goals$Date)
+  #esc_goals$Date <-  as.Date(esc_goals$Date, format='%m/%d/%y')
+  #esc_goals$DOY <- yday(esc_goals$Date)
   #Remove last row
-  esc_goals <- esc_goals[1:(nrow(esc_goals)-1),]
+  #esc_goals <- esc_goals[1:(nrow(esc_goals)-1),]
   #Create DOY index compatible with the genetic samples
-  esc_goals$DOY_index <- esc_goals$DOY - (min(C_E_dat$DOY)-1)
+  #esc_goals$DOY_index <- esc_goals$DOY - (min(C_E_dat$DOY)-1)
   #Add entry for day 135 for plotting purposes
-  esc_goals$DOY_index[length(esc_goals$DOY_index)] <- n_day
+  #esc_goals$DOY_index[length(esc_goals$DOY_index)] <- n_day
   #Standardize the recorded escapement data to a fixed season length (n_day), filling in zeros for any given year's missing data
   for (i in 1:length(unique(C_E_dat$Year))){
     C_E_dat$Escapement_cumulative_late[C_E_dat$Year==unique(C_E_dat$Year)[i]][1] <- C_E_dat$Escapement[C_E_dat$Year==unique(C_E_dat$Year)[i]][1]
@@ -377,7 +354,7 @@ plot_func <- function(exec=F, iter=1000, preseason=F){
  dev.off()
  return(pred_list)
 }
-x <- plot_func(exec=T, iter=1000, preseason=T)
+x <- plot_func(exec=T, iter=1000, preseason=F)
 
 #Isolate the median estimates of the current year's transition and write to a csv
 mat_store <- matrix(nrow=n_day, ncol=length.vec[length(length.vec)])
